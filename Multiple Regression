@@ -1,0 +1,45 @@
+
+card_balance<- read.csv(file = "card_balance.csv", stringsAsFactors = F)
+
+
+Where Objective is to Estimate billed amount for next 3 months
+
+sm_f <- sample(1:nrow(card_balance),0.6*nrow(card_balance), replace = F)
+sm_card_balance <- card_balance[sm_f,]
+
+
+names(sm_card_balance)
+
+summary(sm_card_balance)
+
+ remove the customers with no billed amount in first three months
+sm_card_balance$Pre_billed_amt_3m <-apply(sm_card_balance[,c(7,8,9)],1, sum)
+
+summary(sm_card_balance)
+quantile(sm_card_balance$Pre_billed_amt_3m, probs = seq(0,1,0.05))
+
+
+sm_card_balance <- sm_card_balance[sm_card_balance$Pre_billed_amt_3m>30,]
+
+
+sm_card_balance$billed_3m <-apply(sm_card_balance[,c(10,11,12)],1, mean)
+
+
+quantile(sm_card_balance$billed_3m, probs = seq(0,1,0.05))
+
+hist(sm_card_balance$billed_3m,breaks = 20)
+
+quantile(sm_card_balance$billed_3m, probs = seq(0,1,0.05))
+
+# Outlier Treatment of Target Variables
+sm_card_balance$billed_3m <- ifelse(sm_card_balance$billed_3m>165000,165000,
+                                 ifelse(sm_card_balance$billed_3m<0,0,sm_card_balance$billed_3m))
+
+names(sm_card_balance)
+
+MOdel fitting
+card_billed_amt_reg <- lm(billed_3m~AGE+Pre_billed_amt_3m+Billed_amount_1+Billed_amount_2,
+                data=sm_card_balance)
+
+summary(card_billed_amt_reg)
+
