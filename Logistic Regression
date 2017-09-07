@@ -1,0 +1,39 @@
+card_balance<- read.csv(file = "card_balance.csv", stringsAsFactors = F)
+
+names(sm_card_balance)
+
+If Billed Amount reduces below 20% (That is what we are aiming at)
+
+sm_card_balance$Pred_bill_drop <- ifelse (sm_card_balance$billed_3m < 0.2*sm_card_balance$Pre_billed_amt_3m,1,0)
+
+table(sm_card_balance$Pred_bill_drop)
+
+Billed_amt_drop_logit <- glm(formula = Pred_bill_drop~
+                               AGE+Pre_billed_amt_3m+Billed_amount_1+Payment_1+Payment_2+Payment_3+
+                               Billed_amount_2
+                             ,
+                      family=binomial,
+                      data=sm_card_balance)
+summary(Billed_amt_drop_logit)
+
+
+sm_card_balance$Pred_Amt_drop_prob <- predict(Billed_amt_drop_logit,
+                                              sm_card_balance,
+                              type = c("response"))
+
+table(sm_card_balance$Pred_bill_drop)/nrow(sm_card_balance)
+quantile(sm_card_balance$Pred_Amt_drop_prob, 
+         probs = seq(0,1,0.05))
+
+sm_card_balance$Pred_Amt_drop_Class <- ifelse(sm_card_balance$Pred_Amt_drop_prob >0.288,1,0)
+
+table(sm_card_balance$Pred_Amt_drop_Class,sm_card_balance$Pred_bill_drop)
+
+library(caret)
+
+Finally, we end by looking at the confusion Confusion Matrix
+confusionMatrix(data=factor(sm_card_balance$Pred_Amt_drop_Class),
+                reference=sm_card_balance$Pred_bill_drop,
+                positive='1')
+
+
